@@ -1,0 +1,302 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>org.hrfax.bigdata</groupId>
+    <artifactId>datalake</artifactId>
+    <version>1.0-SNAPSHOT</version>
+
+    <properties>
+        <maven.compiler.source>8</maven.compiler.source>
+        <maven.compiler.target>8</maven.compiler.target>
+        <encoding>UTF-8</encoding>
+        <scala.version>2.12.11</scala.version>
+        <scala.compat.version>2.12</scala.compat.version>
+        <project.sparkversion>3.0.0</project.sparkversion>
+    </properties>
+
+    <repositories>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
+    </repositories>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-streaming_2.12</artifactId>
+            <version>3.0.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-library</artifactId>
+            <version>${scala.version}</version>
+            <!--            <scope>compile</scope>-->
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-core_${scala.compat.version}</artifactId>
+            <version>${project.sparkversion}</version>
+            <!--            <scope>provided</scope>-->
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-yarn_${scala.compat.version}</artifactId>
+            <version>${project.sparkversion}</version>
+            <!--            <scope>provided</scope>-->
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-sql_${scala.compat.version}</artifactId>
+            <version>${project.sparkversion}</version>
+            <!--            <scope>provided</scope>-->
+        </dependency>
+
+        <!--        <dependency>-->
+        <!--            <groupId>org.apache.spark</groupId>-->
+        <!--            <artifactId>spark-streaming_${scala.compat.version}</artifactId>-->
+        <!--            <version>${project.sparkversion}</version>-->
+        <!--            &lt;!&ndash;            <scope>provided</scope>&ndash;&gt;-->
+        <!--        </dependency>-->
+
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-streaming-kafka-0-10_${scala.compat.version}</artifactId>
+            <version>${project.sparkversion}</version>
+            <!--            <scope>provided</scope>-->
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-aws</artifactId>
+            <version>3.2.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-client</artifactId>
+            <version>3.2.0</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/com.amazonaws/aws-java-sdk -->
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-java-sdk</artifactId>
+            <version>1.9.10</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+            <version>2.10.1</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.10.1</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
+            <version>2.10.1</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/com.alibaba/druid -->
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>druid</artifactId>
+            <version>1.1.10</version>
+        </dependency>
+
+<!--        <dependency>-->
+<!--            <groupId>org.example</groupId>-->
+<!--            <artifactId>creditXml2Json</artifactId>-->
+<!--            <version>1.0-SNAPSHOT</version>-->
+<!--            <systemPath>${pom.basedir}/lib/creditXml2Json-1.0-SNAPSHOT.jar</systemPath>-->
+<!--            <scope>system</scope>-->
+<!--        </dependency>-->
+
+<!--        <dependency>-->
+<!--            <groupId>org.example</groupId>-->
+<!--            <artifactId>jolt-util</artifactId>-->
+<!--            <version>1.0-SNAPSHOT</version>-->
+<!--            <systemPath>${pom.basedir}/lib/jolt-util.jar</systemPath>-->
+<!--            <scope>system</scope>-->
+<!--        </dependency>-->
+
+        <dependency>
+            <groupId>org.json4s</groupId>
+            <artifactId>json4s-jackson_2.11</artifactId>
+            <version>3.2.11</version>
+        </dependency>
+
+        <!--es相关 使用jest client来操作es，目前流行-->
+        <dependency>
+            <groupId>io.searchbox</groupId>
+            <artifactId>jest</artifactId>
+            <version>5.3.3</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.codehaus.janino</groupId>
+            <artifactId>commons-compiler</artifactId>
+            <version>3.0.16</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.elasticsearch</groupId>
+            <artifactId>elasticsearch</artifactId>
+            <version>6.8.5</version>
+        </dependency>
+
+        <!--数据湖 delta lake -->
+        <dependency>
+            <groupId>io.delta</groupId>
+            <artifactId>delta-core_2.12</artifactId>
+            <version>0.7.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>fastjson</artifactId>
+            <version>1.2.68</version>
+        </dependency>
+
+        <!--读取excel文件-->
+        <dependency>
+            <groupId>com.crealytics</groupId>
+            <artifactId>spark-excel_${scala.compat.version}</artifactId>
+            <version>0.13.6</version>
+        </dependency>
+
+        <dependency>
+            <groupId>dom4j</groupId>
+            <artifactId>dom4j</artifactId>
+            <version>1.6.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.github.everit-org.json-schema</groupId>
+            <artifactId>org.everit.json.schema</artifactId>
+            <version>1.12.2</version>
+        </dependency>
+
+        <!-- mysql-8.0.15 -->
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>8.0.20</version>
+        </dependency>
+
+        <!-- xls -->
+        <dependency>
+            <groupId>com.github.zuinnote</groupId>
+            <artifactId>spark-hadoopoffice-ds_2.12</artifactId>
+            <version>1.3.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.bazaarvoice.jolt</groupId>
+            <artifactId>jolt-core</artifactId>
+            <version>0.1.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.bazaarvoice.jolt</groupId>
+            <artifactId>json-utils</artifactId>
+            <version>0.1.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.jayway.jsonpath</groupId>
+            <artifactId>json-path</artifactId>
+            <version>2.2.0</version>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.11</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-mllib_2.12</artifactId>
+            <version>3.0.0</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+
+
+    <build>
+        <plugins>
+            <!--编译插件，设置用哪个版本jdk编译之类的...-->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.3</version>
+                <configuration>
+                    <encoding>UTF-8</encoding>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                </configuration>
+            </plugin>
+
+            <!--打包插件，指定入口类-->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>2.5.5</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>com.zzq.NIOServer3</mainClass>
+                        </manifest>
+                    </archive>
+                    <descriptorRefs>
+                        <descriptorRef>jar-with-dependencies</descriptorRef>
+                    </descriptorRefs>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>make-assembly</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.jsonschema2pojo</groupId>
+                <artifactId>jsonschema2pojo-maven-plugin</artifactId>
+                <version>1.0.2</version>
+                <configuration>
+                    <outputDirectory>${pom.basedir}/src/main/java</outputDirectory>
+                    <formatDateTimes>true</formatDateTimes>
+                    <useJodaDates>true</useJodaDates>
+                    <useJodaLocalDates>true</useJodaLocalDates>
+                    <useJodaLocalTimes>true</useJodaLocalTimes>
+                    <dateTimeType>LocalDateTime</dateTimeType>
+                    <dateType>LocalDate</dateType>
+                    <useBigDecimals>true</useBigDecimals>
+                    <useBigIntegers>true</useBigIntegers>
+                    <usePrimitives>true</usePrimitives>
+                    <sourceType>json</sourceType>
+                    <sourceDirectory>${pom.basedir}/src/main/resources/schema</sourceDirectory>
+                    <targetPackage>net.dc.types</targetPackage>
+                    <removeOldOutput>false</removeOldOutput>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>
