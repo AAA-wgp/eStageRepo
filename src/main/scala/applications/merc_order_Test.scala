@@ -21,7 +21,7 @@ object merc_order_Test {
       "submit_time"
     )
     val frame: DataFrame = ExportData.getTableAsDF("merc_order",cols)
-    frame.show(1)
+//    frame.show(1)
   }
 
 }
