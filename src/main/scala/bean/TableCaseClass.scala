@@ -15,7 +15,7 @@ case class  Merc_order(
                         customer_cert_no:String,//客户身份证号
                         submit_time:Long//提交时间
                       )
-//创建业务库业务数据
+//创建业务库业务数据样例类
 case   class Business_data(
                           group_name:String,//集团名称
                           store_name:String,//门店名称
@@ -34,3 +34,18 @@ case   class Business_data(
                           group_id:String,//集团ID
                           store_id:String//门店ID
                           )
+
+//创建门店信息表样例类
+case class Merc_shop(
+                    shop_id:String,//门店ID
+                    platform_code:String,//平台编号
+                    shop_name:String,//门店名称
+                    level:Int,//级别
+                    parent_id:String,//上级ID
+                    parent_level:Int//上级级别
+                    )
+//创建公司信息表样例类
+case class  Acc_company(
+                         platform_code:String,//平台编号
+                       company_name:String //集团名称
+                       )

@@ -13,13 +13,22 @@ object ExportData {
 // props.setProperty("url","jdbc:mysql://192.168.0.104:3306/car_dealers_test")
 
  def getTableAsDF(tableName:String,colunms:Array[String]):DataFrame={
-  val cols = if (colunms.length == 0 || (colunms.length == 1 && colunms(0) == "*")) {
+
+  val spark =  Sparkutils.initSparkSession("getTableData")
+
+  //判断查询字段是全字段还是部分字段
+    val cols = if (colunms.length == 0 || (colunms.length == 1 && colunms(0) == "*")) {
    "*"
   }else {
    colunms.mkString(",")
   }
-  val sql =  s"select  ${cols} from  ${tableName}"
-  val spark =  Sparkutils.initSparkSession("getTableData")
+
+  //  获取查询sql
+  val sql =  s"select  $cols from  $tableName"
+
+  /*
+  *读取数据库数据表，以dataframe形式返回
+  */
   spark.read.format("jdbc")
     .option("user","shortloan")
     .option("password","root#Huirong104")

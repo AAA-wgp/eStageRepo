@@ -3,10 +3,10 @@ package applications
 import bean.Merc_order
 import controller.collect.ExportData
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.functions._
 
 object merc_order_Test {
   def main(args: Array[String]): Unit = {
-//    val tupled = Merc_order.tupled
     val cols=Array("order_no",
       "shop_id",
       "platform_code",
@@ -22,6 +22,8 @@ object merc_order_Test {
     )
     val frame: DataFrame = ExportData.getTableAsDF("merc_order",cols)
 //    frame.show(1)
+    frame.filter(col("order_state") >3)
+
   }
 
 }
