@@ -4,15 +4,25 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.{SparkConf, SparkContext}
 
 object Sparkutils {
-// val  spark =
-//  初始化sparkContext
+
+  /**
+   * 初始化SparkContext
+   * @param appName-输入对应应用名称
+   * @param mode-string类型输入运行模式，默认为本地最多核运行
+   * @return SparkContext
+   */
   def initSparkConf(appName:String,mode:String="local[*]"): SparkContext ={
     val conf = new SparkConf().setAppName(appName).setMaster(mode)
      new SparkContext(conf)
 
   }
 
-  //初始化sparkSession
+  /**
+   * 初始化SparkSession
+   * @param appName-输入对应应用名称
+   * @param mode-string类型输入运行模式，默认为本地最多核运行
+   * @return SparkSession
+   */
  def initSparkSession(appName:String,mode:String="local[*]"): SparkSession ={
    val conf = new SparkConf().setAppName(appName).setMaster(mode)
    SparkSession.builder().config(conf).getOrCreate()

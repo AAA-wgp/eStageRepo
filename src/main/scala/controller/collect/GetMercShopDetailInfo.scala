@@ -4,8 +4,13 @@ import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
 import org.apache.spark.sql.functions._
 import utils.Sparkutils
 object GetMercShopDetailInfo {
+   private val  spark  = Sparkutils.initSparkSession("getMercShopDetailInfo")
+
+  /**
+   * 获取Merc_shop表根据层级关系，展平之后的结果，分别对应门店、二级部门、一级部门以上的详细信息
+   * @return DataFrame
+   */
   def getMercShopFlattenInfo:DataFrame = {
-    val  spark  = Sparkutils.initSparkSession("getMercShopDetailInfo")
 //    import  spark.implicits._
     val col_merc_shop =Array("shop_id",
     "platform_code",
@@ -43,11 +48,12 @@ object GetMercShopDetailInfo {
     val spark  =  Sparkutils.initSparkSession("mercShopTest")
     import  spark.implicits._
     getMercShopFlattenInfo
-      .withColumn("num1",lit("1"))
-      //  .filter($"firstLevelName" === "一家亲")
-      .groupBy('firstLevelName)
-      .agg(count(col("num1")))
-      .show(35)
+      .select("shop_id")
+//      .withColumn("num1",lit("1"))
+//      //  .filter($"firstLevelName" === "一家亲")
+//      .groupBy('firstLevelName)
+//      .agg(count(col("num1")))
+      .show(35,truncate = false)
 
 //  .show()
 //      .show(50,false)
