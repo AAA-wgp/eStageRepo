@@ -13,8 +13,8 @@ object JDBCutils {
    props.setProperty("password","root#Huirong104")
    props.setProperty("driver","com.mysql.jdbc.Driver")
    props.setProperty("url","jdbc:mysql://192.168.0.104:3306/car_dealers_test")
-  def getDatabaseConn: () => Connection ={
-    () => DriverManager.getConnection("jdbc:mysql://192.168.0.104:3306/car_dealers_test", props)
+  def getDatabaseConn:  Connection ={
+     DriverManager.getConnection("jdbc:mysql://192.168.0.104:3306/car_dealers_test", props)
 
 }
   def closeConnection(conn:Connection,pstmt:PreparedStatement): Unit ={

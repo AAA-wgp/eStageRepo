@@ -81,4 +81,4 @@ case class Merc_ResultInfo(
                             ,secondLevelName: String
                           )
 //创建自定义函数中间缓存样例类
-case class  Buff(sum:Int,stageAndLoan:Int)
+case class  Buff(var sum:Int,var stageAndLoan:Int)

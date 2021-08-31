@@ -13,7 +13,7 @@ object merc_order_withRDD_Demo {
     //获取订单主表数据
     val orderRDD: JdbcRDD[Merc_order] = new JdbcRDD[Merc_order](
       sc,
-      JDBCutils.getDatabaseConn,
+      ()=> JDBCutils.getDatabaseConn,
       "select order_no,shop_id,platform_code,order_state,loan_amount  from merc_order where ?<= id and id<=?",
       32,
       4726002,
@@ -30,7 +30,7 @@ object merc_order_withRDD_Demo {
     //获取业务库数据
     val businessRDD = new JdbcRDD[Business_data](
       sc,
-      JDBCutils.getDatabaseConn,
+      () =>JDBCutils.getDatabaseConn,
       "select order_no,store_id,loan_or_not,by_stages,lending_time,group_id from  business_data where ?<= t_id and t_id<=?",
       46,
       1314,
@@ -61,7 +61,7 @@ object merc_order_withRDD_Demo {
     //获取 订单分期信息（放款时间）
     val  loanRDD  = new JdbcRDD[Merc_loan](
       sc,
-      JDBCutils.getDatabaseConn,
+      () =>JDBCutils.getDatabaseConn,
       "select order_no,loan_success_time from  merc_order_loan where ?<=id and  id<=?",
       1,
       473311,
@@ -109,7 +109,6 @@ val loanPreRDD = loanRDD.map(
           loan_success_time))
         }
       ).union(businessPreRDD)
-      //(order_no,(shop_id,platform_code,loan_or_not,by_stages,loan_success_time))
       .map(
         data=>{
          val stageAndLoan =  if(data._2._3 == "是" && data._2._4 =="分期") 1 else 0
@@ -123,7 +122,8 @@ val loanPreRDD = loanRDD.map(
       .map(
       data=>(data._1,data._2._2/data._2._1)
       )
-      .collect().foreach(println)
+      .collect()
+      .foreach(println)
     
 //    关闭SparkContext
      sc.stop()

@@ -1,11 +1,10 @@
 package applications
 
-import bean.{Merc_ResultInfo, Buff}
+import bean.{Buff, Merc_ResultInfo}
 import controller.collect.{ExportData, GetMercShopDetailInfo}
-import org.apache.spark.sql.{DataFrame, Dataset, Encoder, Encoders}
+import org.apache.spark.sql.{DataFrame, Encoder, Encoders, functions}
 import org.apache.spark.sql.expressions.Aggregator
 import org.apache.spark.sql.functions._
-import org.apache.spark.storage.StorageLevel
 import utils.Sparkutils
 
 object merc_order_withDF_Demo {
@@ -79,7 +78,7 @@ object merc_order_withDF_Demo {
     //   以DF形式获取门店展平后字段数组
     val frame_merc_detail_info: DataFrame = GetMercShopDetailInfo
       .getMercShopFlattenInfo
-      .drop(("platform_code"))
+      .drop("platform_code")
 
     /*
     * 获取订单表对应字段，关联merc_order_loan获取放款时间
@@ -112,7 +111,7 @@ object merc_order_withDF_Demo {
         "left")
       .drop(frame_merc_loan("order_no"))
 
-      val frame_union_order_info =  frame
+    val frame_union_order_info =  frame
       .join(frame_tb_role, frame_order("seller_acc_id") === frame_tb_role("acc_id"), "left")
       .drop(frame_tb_role("acc_id"))
       .drop(frame_tb_role("state"))
@@ -120,52 +119,15 @@ object merc_order_withDF_Demo {
       .drop(frame_order("seller_acc_id"))
       .withColumnRenamed("name", "name_of_salesman")
       .union(frame_business)
+      .withColumn("loan_success_time",col("loan_success_time"))
 //    frame_union_order_info.show(100,false)
     /*
     * 将合并后数据关联门店展平后详细数据获取对应一级部门、二级部门等信息
     * */
     frame_union_order_info.createGlobalTempView("order_union_info")
     frame_merc_detail_info.createGlobalTempView("merc_shop_detailInfo")
-
-//    数据持久化，后续需要分订单全款或者分期来计算指标
-//    frame_with_Merc_detail_info.persist(StorageLevel.MEMORY_AND_DISK)
-//    以放款时间为维度计算销量、分期且放款量等
-
-
-//    frame_with_Merc_detail_info.selectExpr(
-//      "order_no",
-//      "shop_id",
-//      "case loan_or_not when '是' then (case by_stages when '分期' then 1 end)  else null end as stage_and_loan",
-//      "platform_code",
-//      "loan_success_time",
-//      "company_name",
-//      "firstLevelID",
-//      "firstLevelName",
-//      "secondLevelID",
-//      "secondLevelName"
-//    )
-//      .groupBy(
-//      "platform_code",
-//      "company_name",
-//      "firstLevelID",
-//      "firstLevelName",
-//      "secondLevelID",
-//      "secondLevelName"
-//    ).agg("stage_and_loan"->"sum","order_no"->"sum")
-//      .withColumnRenamed("sum(stage_and_loan)","stage_loan_order_nums")
-//      .withColumnRenamed("sum(order_no)","nums")
-//      .selectExpr(
-//        "platform_code",
-//        "company_name",
-//        "firstLevelID",
-//        "firstLevelName",
-//        "secondLevelID",
-//        "secondLevelName",
-//        "stage_loan_order_nums/nums  AS STAGE_ORDER_RATIO"
-//      )
-//      .show(20,truncate = false)
- spark.sql(
-  """
+    spark.sql(
+    """
     |select oui.*,
     | msd.company_name
     |,msd.thirdLevelID
@@ -177,17 +139,28 @@ object merc_order_withDF_Demo {
     |from  global_temp.order_union_info oui
     |left join global_temp.merc_shop_detailInfo msd
     |on oui.shop_id=msd.shop_id
-    |""".stripMargin).as[Merc_ResultInfo]
-   .createTempView("detailInfo")
-    spark.udf.register("avgStageLoan", "GetStageRatioFunction")
-    spark.sql("select avgStageLoan,shop_id,platform_code,company_name  from detailInfo group by shop_id,platform_code,company_name ").show(20,truncate = false)
+    |""".stripMargin)
+      .as[Merc_ResultInfo]
+      .createTempView("detailInfo")
+
+    //注册自定义函数
+    spark.udf.register("avgStageLoan", functions.udaf( new GetStageRatioFunction))
+
+    //计算得出分组后详细结果
+    spark.sql("select avgStageLoan(order_no),shop_id  from detailInfo group by shop_id ").show(20,truncate = false)
+
+    //关闭sparkSession连接
+    spark.stop()
   }
+
+  //自定义udaf获取门店对应放款时间的分期放款销量占比
   class GetStageRatioFunction  extends Aggregator[Merc_ResultInfo,Buff,Double]{
     override def zero: Buff = Buff(0,0)
 
+    //根据Merc_ResultInfo表by_stages与loan_or_not字段判断订单是否为分期且放款
     override def reduce(b: Buff, a: Merc_ResultInfo): Buff = {
       b.sum += 1
-      if(a.by_stages=="分期" && a.loan_or_not=="是"){
+      if(a.by_stages == "分期" && a.loan_or_not=="是"){
         b.stageAndLoan += 1
       }
       b
@@ -199,7 +172,7 @@ object merc_order_withDF_Demo {
       b1
     }
 
-    override def finish(reduction: Buff): Double = reduction.stageAndLoan.toDouble/reduction.sum
+    override def finish(reduction: Buff): Double = reduction.stageAndLoan.toDouble/reduction.sum.toDouble
 
     override def bufferEncoder: Encoder[Buff] = Encoders.product
 
