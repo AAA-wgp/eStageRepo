@@ -24,7 +24,7 @@ object merc_order_withDF_Demo {
       "period_nums",
       "create_time",
       "customer_cert_no",
-      "UNIX_TIMESTAMP(submit_time)"
+      "submit_time"
     )
 
     //定义业务库查询字段数组
@@ -37,7 +37,7 @@ object merc_order_withDF_Demo {
 //      "reporting_time",
 //      "is_it_approved",
       "group_id",
-      "UNIX_TIMESTAMP(lending_time)",//放款时间
+      "lending_time",//放款时间
 //      "installment_amount",//分期金额
 //      "number_of_stages",
 
@@ -47,7 +47,7 @@ object merc_order_withDF_Demo {
     //定义订单分期贷款信息表字段数组
     val cols_merc_loan =Array(
       "order_no",
-      "UNIX_TIMESTAMP(loan_success_time)"
+      "loan_success_time"
     )
 
     //定义账户信息表字段数组
@@ -59,18 +59,17 @@ object merc_order_withDF_Demo {
 
     //    以DF形式获取订单的数据
     val frame_order: DataFrame = ExportData.getTableAsDF("merc_order",cols)
-      .withColumnRenamed("submit_time","UNIX_TIMESTAMP(submit_time)")
 
     //    以DF形式获取业务库订单的数据
     val frame_business = ExportData.getTableAsDF("business_data", cols_business)
-      .withColumnRenamed("lending_time","loan_success_time")
       .withColumnRenamed("group_id","platform_code")
       .withColumnRenamed("store_id","shop_id")
-      .withColumnRenamed("UNIX_TIMESTAMP(lending_time)","lending_time")
-
+      .withColumn("loan_success_time",substring(col("lending_time"),1,10))
+      .drop("lending_time")
     //    以DF形式获取订单分期贷款信息表数据
     val frame_merc_loan = ExportData.getTableAsDF("merc_order_loan", cols_merc_loan)
-      .withColumnRenamed("UNIX_TIMESTAMP(loan_success_time)","loan_success_time")
+      .withColumn("loan_success_time",substring(col("loan_success_time"),1,10))
+
     //   以DF形式获取账户信息表字段数组
     val frame_tb_role = ExportData.getTableAsDF("tb_account", cols_tb_account)
       .where("state =0 and del_flag=1")
@@ -90,7 +89,6 @@ object merc_order_withDF_Demo {
       .selectExpr("order_no",
         "shop_id",
         "seller_acc_id",
-        //        "name as name_of_salesman",
         "case order_state  when 10 then  '是' else '否' end as loan_or_not ",
         "case loan_amount when 0 then '全款' else '分期' end  as by_stages",
 //        """
@@ -119,8 +117,8 @@ object merc_order_withDF_Demo {
       .drop(frame_order("seller_acc_id"))
       .withColumnRenamed("name", "name_of_salesman")
       .union(frame_business)
-      .withColumn("loan_success_time",col("loan_success_time"))
-//    frame_union_order_info.show(100,false)
+    frame_union_order_info.show(100,false)
+    frame_union_order_info.printSchema()
     /*
     * 将合并后数据关联门店展平后详细数据获取对应一级部门、二级部门等信息
     * */
@@ -147,7 +145,7 @@ object merc_order_withDF_Demo {
     spark.udf.register("avgStageLoan", functions.udaf( new GetStageRatioFunction))
 
     //计算得出分组后详细结果
-    spark.sql("select avgStageLoan(order_no),shop_id  from detailInfo group by shop_id ").show(20,truncate = false)
+    spark.sql("select avgStageLoan(order_no),shop_id,loan_success_time from detailInfo group by shop_id,loan_success_time ").show(20,truncate = false)
 
     //关闭sparkSession连接
     spark.stop()
