@@ -31,7 +31,7 @@ object merc_order_withRDD_Demo {
     val businessRDD = new JdbcRDD[Business_data](
       sc,
       () =>JDBCutils.getDatabaseConn,
-      "select order_no,store_id,loan_or_not,by_stages,lending_time,group_id from  business_data where ?<= t_id and t_id<=?",
+      "select order_no,store_id,loan_or_not,by_stages,substr(char(lending_time),1,10) as lending_time,group_id from  business_data where ?<= t_id and t_id<=?",
       46,
       1314,
       20,
@@ -40,7 +40,7 @@ object merc_order_withRDD_Demo {
           rs.getString(2),
           rs.getString(3),
           rs.getString(4),
-          rs.getLong(5),
+          rs.getString(5),
           rs.getString(6))
       }
     )
@@ -62,15 +62,15 @@ object merc_order_withRDD_Demo {
     val  loanRDD  = new JdbcRDD[Merc_loan](
       sc,
       () =>JDBCutils.getDatabaseConn,
-      "select order_no,loan_success_time from  merc_order_loan where ?<=id and  id<=?",
+      "select order_no,substr(char(loan_success_time),1,10)  as  loan_success_time from  merc_order_loan where ?<=id and  id<=?",
       1,
       473311,
       20,
-      rs=>{Merc_loan(rs.getString(1),rs.getLong(2))}
+      rs=>{Merc_loan(rs.getString(1),rs.getString(2))}
     )
 //数据预处理
-val loanPreRDD = loanRDD.map(
-  data => (data.order_no, data.loan_success_time)
+    val loanPreRDD = loanRDD.map(
+      data => (data.order_no, data.loan_success_time)
 )
     val businessPreRDD = businessRDD.map(
       data => {
@@ -80,6 +80,7 @@ val loanPreRDD = loanRDD.map(
         (data.order_no, (shop_id, platform_code, data.loan_or_not,data.by_stages, loan_success_time))
       }
     )
+    //过滤订单表状态小于3 无效统计的数据
     orderRDD.filter(_.order_state >3)
       .map(
         data=> {
@@ -97,9 +98,9 @@ val loanPreRDD = loanRDD.map(
       ).leftOuterJoin(loanPreRDD)
       .map(
         data=>{
-          val loan_success_time = data._2._2 match {
-            case Some(value) => value
-            case _ => 0L
+          val loan_success_time: String = data._2._2 match {
+            case Some(_) => _
+            case _ => ""
           }
           (data._1,
            ( data._2._1._1,
@@ -112,7 +113,7 @@ val loanPreRDD = loanRDD.map(
       .map(
         data=>{
          val stageAndLoan =  if(data._2._3 == "是" && data._2._4 =="分期") 1 else 0
-          ((data._2._2, data._2._1, getDate(data._2._5)),
+          ((data._2._2, data._2._1, data._2._5),
           (1, stageAndLoan))
         }
       )

@@ -21,7 +21,7 @@ case   class Business_data(
                             store_id:String,//门店ID
                             loan_or_not:String,//是否放款
                             by_stages:String,//全款分期
-                            lending_time:Long,//放款时间
+                            lending_time:String,//放款时间
                             group_id:String//集团ID
 //                          group_name:String,//集团名称
 //                          store_name:String,//门店名称
@@ -61,7 +61,7 @@ case class Tb_account(
 //创建分期贷款信息样例类
 case class Merc_loan(
                       order_no:String,
-                      loan_success_time:Long
+                      loan_success_time:String
                     )
 //存放中间计算结果样例类
 case class Merc_ResultInfo(
