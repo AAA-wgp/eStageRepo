@@ -99,7 +99,7 @@ object merc_order_withRDD_Demo {
       .map(
         data=>{
           val loan_success_time: String = data._2._2 match {
-            case Some(_) => _
+            case Some(value) => value
             case _ => ""
           }
           (data._1,
