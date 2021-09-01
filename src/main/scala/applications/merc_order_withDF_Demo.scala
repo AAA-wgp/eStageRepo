@@ -37,11 +37,8 @@ object merc_order_withDF_Demo {
 //      "reporting_time",
 //      "is_it_approved",
       "group_id",
-      "lending_time",//放款时间
-//      "installment_amount",//分期金额
-//      "number_of_stages",
-
-      "name_of_salesman"
+      "name_of_salesman",
+      "lending_time"//放款时间
     )
 
     //定义订单分期贷款信息表字段数组
@@ -64,8 +61,8 @@ object merc_order_withDF_Demo {
     val frame_business = ExportData.getTableAsDF("business_data", cols_business)
       .withColumnRenamed("group_id","platform_code")
       .withColumnRenamed("store_id","shop_id")
-      .withColumn("loan_success_time",substring(col("lending_time"),1,10))
-      .drop("lending_time")
+      .withColumnRenamed("lending_time","loan_success_time")
+      .withColumn("loan_success_time",substring(col("loan_success_time"),1,10))
     //    以DF形式获取订单分期贷款信息表数据
     val frame_merc_loan = ExportData.getTableAsDF("merc_order_loan", cols_merc_loan)
       .withColumn("loan_success_time",substring(col("loan_success_time"),1,10))
@@ -84,7 +81,7 @@ object merc_order_withDF_Demo {
     * 关联tb_role表获取对应销售员姓名
     * 最后与业务库数据（business_data）进行合并
     * */
-    val frame = frame_order.filter(col("order_state") > 3)
+    val frame_union_order_info = frame_order.filter(col("order_state") > 3)
       //      .where("order_stage >3")
       .selectExpr("order_no",
         "shop_id",
@@ -103,62 +100,62 @@ object merc_order_withDF_Demo {
 //          |end  as  order_state
 //          |""".stripMargin,
         "platform_code")
-      .join(
-        frame_merc_loan,
-        frame_order("order_no") === frame_merc_loan("order_no"),
-        "left")
-      .drop(frame_merc_loan("order_no"))
 
-    val frame_union_order_info =  frame
       .join(frame_tb_role, frame_order("seller_acc_id") === frame_tb_role("acc_id"), "left")
       .drop(frame_tb_role("acc_id"))
       .drop(frame_tb_role("state"))
       .drop(frame_tb_role("del_flag"))
       .drop(frame_order("seller_acc_id"))
       .withColumnRenamed("name", "name_of_salesman")
+      .join(
+        frame_merc_loan,
+        frame_order("order_no") === frame_merc_loan("order_no"),
+        "left")
+      .drop(frame_merc_loan("order_no"))
       .union(frame_business)
-    frame_union_order_info.show(100,false)
-    frame_union_order_info.printSchema()
     /*
     * 将合并后数据关联门店展平后详细数据获取对应一级部门、二级部门等信息
     * */
     frame_union_order_info.createGlobalTempView("order_union_info")
     frame_merc_detail_info.createGlobalTempView("merc_shop_detailInfo")
-    spark.sql(
-    """
-    |select oui.*,
-    | msd.company_name
-    |,msd.thirdLevelID
-    |,msd.thirdLevelName
-    |,msd.firstLevelID
-    |,msd.firstLevelName
-    |,msd.secondLevelID
-    |,msd.secondLevelName
-    |from  global_temp.order_union_info oui
-    |left join global_temp.merc_shop_detailInfo msd
-    |on oui.shop_id=msd.shop_id
-    |""".stripMargin)
-      .as[Merc_ResultInfo]
-      .createTempView("detailInfo")
+    val detailInfo: DataFrame = spark.sql(
+      """
+        |select oui.*,
+        | msd.company_name
+        |,msd.thirdLevelID
+        |,msd.thirdLevelName
+        |,msd.firstLevelID
+        |,msd.firstLevelName
+        |,msd.secondLevelID
+        |,msd.secondLevelName
+        |from  global_temp.order_union_info oui
+        |left join global_temp.merc_shop_detailInfo msd
+        |on oui.shop_id=msd.shop_id
+        |""".stripMargin)
+
 
     //注册自定义函数
     spark.udf.register("avgStageLoan", functions.udaf( new GetStageRatioFunction))
 
+//    detailInfo.printSchema()
     //计算得出分组后详细结果
-    spark.sql("select avgStageLoan(order_no),shop_id,loan_success_time from detailInfo group by shop_id,loan_success_time ").show(20,truncate = false)
+    detailInfo.repartition(1)
+      .groupBy("shop_id","loan_success_time")
+      .agg("order_no"->"avgStageLoan")
+      .show(20,truncate = false)
 
     //关闭sparkSession连接
     spark.stop()
   }
 
-  //自定义udaf获取门店对应放款时间的分期放款销量占比
+    //自定义udaf获取门店对应放款时间的分期放款销量占比
   class GetStageRatioFunction  extends Aggregator[Merc_ResultInfo,Buff,Double]{
     override def zero: Buff = Buff(0,0)
 
     //根据Merc_ResultInfo表by_stages与loan_or_not字段判断订单是否为分期且放款
     override def reduce(b: Buff, a: Merc_ResultInfo): Buff = {
       b.sum += 1
-      if(a.by_stages == "分期" && a.loan_or_not=="是"){
+      if(a.by_stages == "分期" && a.loan_or_not == "是"){
         b.stageAndLoan += 1
       }
       b
