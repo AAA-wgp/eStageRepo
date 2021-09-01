@@ -6,7 +6,7 @@ import org.apache.spark.rdd.JdbcRDD
 import java.sql.{Connection, Driver, DriverManager, PreparedStatement, ResultSet}
 import java.util.Properties
 
-object JDBCutils {
+object JDBCutils  extends  Serializable {
   private  val  props = new Properties()
   Class.forName("com.mysql.jdbc.Driver").newInstance()
   props.setProperty("user","shortloan")

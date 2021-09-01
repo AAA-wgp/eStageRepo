@@ -70,8 +70,8 @@ case class Merc_ResultInfo(
                             ,loan_or_not: String
                             ,by_stages: String
                             ,platform_code: String
-                            ,loan_success_time: String
                             ,name_of_salesman: String
+                             ,loan_success_time: String
                             ,company_name: String
                             ,thirdLevelID: String
                             ,thirdLevelName: String
