@@ -2,7 +2,7 @@ package applications
 
 import bean.{Buff, Merc_ResultInfo}
 import controller.collect.{ExportData, GetMercShopDetailInfo}
-import org.apache.spark.sql.{DataFrame, Dataset, Encoder, Encoders, functions}
+import org.apache.spark.sql.{DataFrame, Dataset, Encoder, Encoders, Row, SaveMode, functions}
 import org.apache.spark.sql.expressions.Aggregator
 import org.apache.spark.sql.functions._
 import utils.Sparkutils
@@ -114,22 +114,23 @@ object merc_order_withDF_Demo {
         "loan_success_time",
         "case loan_or_not when '是' then( case by_stages when '分期' then '分期且放款'  else '' end) else '' end as stageAndLoan"
       )
-
     //注册自定义函数
     spark.udf.register("avgStageLoan", functions.udaf( new GetStageRatioFunction))
 
     //计算得出分组后详细结果
-    detailInfo.repartition(1)
+    var resultDF: Dataset[Row] =  detailInfo.repartition(1)
       .groupBy("loan_success_time","shop_id")
-      .agg("stageAndLoan"->"avgStageLoan")
-      .show(20,truncate = false)
+      .agg("stageAndLoan"->"avgStageLoan").alias("stageLoanRatio")
+
+    resultDF.write
+      .mode(SaveMode.Overwrite)
 
     //关闭sparkSession连接
     spark.stop()
   }
 
     //自定义udaf获取门店对应放款时间的分期放款销量占比
-  class GetStageRatioFunction  extends Aggregator[String,Buff,Double]{
+  class GetStageRatioFunction  extends Aggregator[String,Buff,String]{
     override def zero: Buff = Buff(0,0)
 
     //根据订单是否为分期且放款判断
@@ -147,11 +148,11 @@ object merc_order_withDF_Demo {
       b1
     }
 
-    override def finish(reduction: Buff): Double = reduction.stageAndLoan.toDouble/ reduction.sum
+    override def finish(reduction: Buff): String = ((reduction.stageAndLoan*1000).toDouble/ reduction.sum/10).formatted("%.2f").toString.concat("%")
 
     override def bufferEncoder: Encoder[Buff] = Encoders.product
 
-    override def outputEncoder: Encoder[Double] = Encoders.scalaDouble
+    override def outputEncoder: Encoder[String] = Encoders.STRING
   }
 
 }
