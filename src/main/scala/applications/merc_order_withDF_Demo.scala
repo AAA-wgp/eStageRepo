@@ -5,7 +5,8 @@ import controller.collect.{ExportData, GetMercShopDetailInfo}
 import org.apache.spark.sql.{DataFrame, Dataset, Encoder, Encoders, Row, SaveMode, functions}
 import org.apache.spark.sql.expressions.Aggregator
 import org.apache.spark.sql.functions._
-import utils.Sparkutils
+import utils.JDBCutils.getPropsToMap
+import utils.{JDBCutils, Sparkutils}
 
 object merc_order_withDF_Demo {
   def main(args: Array[String]): Unit = {
@@ -122,9 +123,10 @@ object merc_order_withDF_Demo {
       .groupBy("loan_success_time","shop_id")
       .agg("stageAndLoan"->"avgStageLoan").alias("stageLoanRatio")
 
+    //覆盖写入数据库，需要与rdd生成结果进行比较
     resultDF.write
       .mode(SaveMode.Overwrite)
-
+      .jdbc(getPropsToMap("url"),"car_dealers_test.stageLoanTable",JDBCutils.props)
     //关闭sparkSession连接
     spark.stop()
   }
@@ -148,7 +150,7 @@ object merc_order_withDF_Demo {
       b1
     }
 
-    override def finish(reduction: Buff): String = ((reduction.stageAndLoan*1000).toDouble/ reduction.sum/10).formatted("%.2f").toString.concat("%")
+    override def finish(reduction: Buff): String = ((reduction.stageAndLoan*1000).toDouble/ reduction.sum/10).formatted("%.2f").concat("%")
 
     override def bufferEncoder: Encoder[Buff] = Encoders.product
 

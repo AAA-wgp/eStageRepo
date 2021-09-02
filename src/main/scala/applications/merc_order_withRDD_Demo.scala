@@ -77,7 +77,7 @@ object merc_order_withRDD_Demo {
         }
       )
       //数据逻辑处理
-    orderRDD.filter(_.order_state > 3)
+    val resultRDD = orderRDD.filter(_.order_state > 3)
       .map(
         data => {
           val loan_or_not = data.order_state match {
@@ -110,25 +110,50 @@ object merc_order_withRDD_Demo {
       .union(businessPreRDD)
       .map(
         data => {
-          val  str =  if( data._2._5 == null ) {
+          val str = if (data._2._5 == null) {
             ""
-          }else  if( data._2._5.length >7 ){
-             data._2._5.substring(0,7)
+          } else if (data._2._5.length > 7) {
+            data._2._5.substring(0, 7)
           }
           val stageAndLoan = if (data._2._3 == "是" && data._2._4 == "分期") 1 else 0
-          ((data._2._2, data._2._1,str ),
+          ((data._2._1, str),
             (1, stageAndLoan))
         }
       )
       .reduceByKey(
-        (data1,data2)=>(data1._1+data1._1,data1._2+data2._2)
+        (data1, data2) => (data1._1 + data1._1, data1._2 + data2._2)
       )
       .map(
-        data => (data._1, (data._2._2*1000.toDouble / data._2._1/10).toString.concat("%"))
+        data => (data._1._2.toString,data._1._1, (data._2._2 * 1000.toDouble / data._2._1 / 10).formatted("%.2f").toString.concat("%"))
       )
-      .collect()
-      .foreach(println)
-
+//    val  sql_create =
+//      """
+//        |CREATE TABLE `stageloantableRDD` (
+//        |  `loan_success_time` varchar(100),
+//        |  `shop_id` varchar(100),
+//        |  `avgStageLoanRatio` varchar(100)
+//        |) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+//        |""".stripMargin
+//    val conn = JDBCutils.getDatabaseConn
+//    val pspt0 = conn.prepareStatement(sql_create)
+//    pspt0.execute()
+//    pspt0.close()
+//    conn.close()
+    resultRDD
+      .foreachPartition(x=>
+        {
+          val sql_insert = "insert into stageloantableRDD values(?,?,?)"
+          val pspt = JDBCutils.getDatabaseConn.prepareStatement(sql_insert)
+          x.foreach{t=>{
+            pspt.setString(1,t._1)
+            pspt.setString(2,t._2)
+            pspt.setString(3,t._3)
+            pspt.execute()
+}
+}
+          pspt.close()
+        }
+      )
     //关闭SparkContext
     sc.stop()
     }

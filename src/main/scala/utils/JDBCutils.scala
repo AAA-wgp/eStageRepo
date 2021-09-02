@@ -7,7 +7,7 @@ import java.sql.{Connection, Driver, DriverManager, PreparedStatement, ResultSet
 import java.util.Properties
 
 object JDBCutils  extends  Serializable {
-  private  val  props = new Properties()
+    val  props: Properties = new Properties()
   Class.forName("com.mysql.jdbc.Driver").newInstance()
   props.setProperty("user","shortloan")
    props.setProperty("password","root#Huirong104")
@@ -18,6 +18,17 @@ object JDBCutils  extends  Serializable {
      DriverManager.getConnection("jdbc:mysql://192.168.0.104:3306/car_dealers_test", props)
 
 }
+  def getPropsToMap: Map[String, String] ={
+    Map(
+      "user"-> props.getProperty("user"),
+      "password"->props.getProperty("password"),
+      "driver"-> props.getProperty("driver"),
+      "url"->props.getProperty("url"),
+      "characterEncoding"->props.getProperty("characterEncoding")
+    )
+    }
+
+
   def closeConnection(conn:Connection,pstmt:PreparedStatement): Unit ={
     try {
       if (pstmt != null){
@@ -28,6 +39,10 @@ object JDBCutils  extends  Serializable {
     }finally {
       conn.close()
     }
+  }
+
+  def main(args: Array[String]): Unit = {
+
   }
 
 
