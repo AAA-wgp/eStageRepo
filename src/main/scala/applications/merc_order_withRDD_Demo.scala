@@ -17,7 +17,7 @@ object merc_order_withRDD_Demo {
         () => JDBCutils.getDatabaseConn,
         "select order_no,shop_id,platform_code,order_state,loan_amount  from merc_order where ?<= id and id<=?",
         32,
-        4726002,
+        4871641,
         20,
         rs => {
           Merc_order(rs.getString(1),
@@ -55,7 +55,7 @@ object merc_order_withRDD_Demo {
         () => JDBCutils.getDatabaseConn,
         "select order_no,substr((loan_success_time),1,10)  as  loan_success_time from  merc_order_loan where ?<=id and  id<=? and loan_success_time is not null",
         1,
-        473311,
+        4861635,
         20,
         rs => {
           Merc_loan(rs.getString(1), rs.getString(2))
@@ -88,7 +88,6 @@ object merc_order_withRDD_Demo {
             case 0 => "全款"
             case _ => "分期"
           }
-
           (data.order_no, (data.shop_id, data.platform_code, loan_or_not, by_stages))
         }
       )
@@ -126,6 +125,7 @@ object merc_order_withRDD_Demo {
       .map(
         data => (data._1._2.toString,data._1._1, (data._2._2 * 1000.toDouble / data._2._1 / 10).formatted("%.2f").toString.concat("%"))
       )
+    //建表语句仅需要执行一次
 //    val  sql_create =
 //      """
 //        |CREATE TABLE `stageloantableRDD` (
@@ -139,6 +139,8 @@ object merc_order_withRDD_Demo {
 //    pspt0.execute()
 //    pspt0.close()
 //    conn.close()
+
+      //将结果数据写入到Mysql数据库
     resultRDD
       .foreachPartition(x=>
         {
@@ -149,11 +151,11 @@ object merc_order_withRDD_Demo {
             pspt.setString(2,t._2)
             pspt.setString(3,t._3)
             pspt.execute()
-}
-}
+}}
           pspt.close()
         }
       )
+
     //关闭SparkContext
     sc.stop()
     }
