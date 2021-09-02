@@ -11,6 +11,7 @@ object merc_order_withDF_Demo {
   def main(args: Array[String]): Unit = {
     val spark = Sparkutils.initSparkSession("getStageLoanRatio")
     import  spark.implicits._
+    val catalog = spark.catalog
 
      // 定义订单表查询字段数组
     val cols=Array(
@@ -128,10 +129,10 @@ object merc_order_withDF_Demo {
   }
 
     //自定义udaf获取门店对应放款时间的分期放款销量占比
-  class GetStageRatioFunction  extends Aggregator[String,Buff,String]{
+  class GetStageRatioFunction  extends Aggregator[String,Buff,Double]{
     override def zero: Buff = Buff(0,0)
 
-    //根据Merc_ResultInfo表by_stages与loan_or_not字段判断订单是否为分期且放款
+    //根据订单是否为分期且放款判断
     override def reduce(b: Buff, a: String): Buff = {
       b.sum += 1
       if(a == "分期且放款" ){
@@ -146,11 +147,11 @@ object merc_order_withDF_Demo {
       b1
     }
 
-    override def finish(reduction: Buff): String = (((reduction.stageAndLoan*1000).toDouble/ reduction.sum.toDouble)/10).toString.concat("%")
+    override def finish(reduction: Buff): Double = reduction.stageAndLoan.toDouble/ reduction.sum
 
     override def bufferEncoder: Encoder[Buff] = Encoders.product
 
-    override def outputEncoder: Encoder[String] = Encoders.STRING
+    override def outputEncoder: Encoder[Double] = Encoders.scalaDouble
   }
 
 }
